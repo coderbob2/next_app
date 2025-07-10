@@ -5,3 +5,7 @@
 tags
 node_modules
 __pycache__
+
+next_app/public/next
+next_app/public/node_modules
+next_app/www/next.html
