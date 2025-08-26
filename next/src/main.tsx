@@ -1,23 +1,43 @@
+import React, { type JSX } from 'react';
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { FrappeProvider } from 'frappe-react-sdk';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import LoginPage from './pages/LoginPage.tsx';
+
 import { Toaster } from 'sonner'
 import App from './App.tsx';
-import HomePage from './pages/HomePage.tsx';
-import GenericPage from "./pages/GenericPage.tsx";
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import WorkspacePage from './pages/WorkspacePage.tsx';
-import { useParams } from 'react-router-dom';
+import HomePage from './pages/HomePage.tsx';
+import LoginPage from './pages/LoginPage.tsx';
+import GenericLandingPage from './pages/GenericLandingPage.tsx';
+import { menuItems } from './components/layouts/menuItems.tsx';
+import CustomersPage from './pages/CustomersPage.tsx';
+import SuppliersPage from './pages/SuppliersPage.tsx';
+import BuyingPage from './pages/BuyingPage.tsx';
+import SellingPage from './pages/SellingPage.tsx';
+import ItemsPage from './pages/ItemsPage.tsx';
+import StockBalancePage from './pages/StockBalancePage.tsx';
+import PurchasesPage from './pages/PurchasesPage.tsx';
+import PurchaseInvoiceDetailsPage from './pages/PurchaseInvoiceDetailsPage.tsx';
+import PurchaseInvoiceAddPage from './pages/PurchaseInvoiceAddPage.tsx';
+import SalesInvoicesPage from './pages/SalesInvoicesPage.tsx';
+import SalesInvoiceDetailsPage from './pages/SalesInvoiceDetailsPage.tsx';
+import SalesInvoiceAddPage from './pages/SalesInvoiceAddPage.tsx';
+import CustomerReceiptsPage from "./pages/CustomerReceiptsPage.tsx";
+import SupplierPaymentsPage from "./pages/SupplierPaymentsPage.tsx";
+import PaymentEntryDetailsPage from './pages/PaymentEntryDetailsPage.tsx';
+import PointOfSalePage from './pages/PointOfSalePage.tsx';
+import VendorBalancePage from './pages/VendorBalancePage.tsx';
+import CustomerBalancePage from './pages/CustomerBalancePage.tsx';
+import StockLedgerPage from './pages/StockLedgerPage.tsx';
+import CustomerLedgerPage from './pages/CustomerLedgerPage.tsx';
+import StockTransferPage from "./pages/StockTransferPage";
+import StockAdjustmentPage from "./pages/StockAdjustmentPage";
 
 const queryClient = new QueryClient();
 
-const GenericPageWrapper = () => {
-  const { doctype_name } = useParams();
-  return <GenericPage doctype={doctype_name!} />;
-};
 
 const router = createBrowserRouter([
   {
@@ -33,15 +53,122 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "/doctype/:doctype_name",
-        element: <GenericPageWrapper />,
+        path: "/customers",
+        element: <CustomersPage />,
       },
       {
-        path: "/:page_name",
-        element: <WorkspacePage />
-      }
+        path: "/suppliers",
+        element: <SuppliersPage />,
+      },
+      {
+        path: "/buying",
+        element: <BuyingPage />,
+      },
+      {
+        path: "/selling",
+        element: <SellingPage />,
+      },
+      {
+        path: "/stock",
+        element: <GenericLandingPage />,
+      },
+      {
+        path: "/items",
+        element: <ItemsPage />,
+      },
+      {
+        path: "/stock-balance",
+        element: <StockBalancePage />,
+      },
+      {
+        path: "/stock-ledger",
+        element: <StockLedgerPage />,
+      },
+      {
+        path: "/stock-transfer",
+        element: <StockTransferPage />,
+      },
+      {
+        path: "/stock-adjustment",
+        element: <StockAdjustmentPage />,
+      },
+      {
+        path: "/customer-ledger",
+        element: <CustomerLedgerPage />,
+      },
+      {
+        path: "/purchases",
+        element: <PurchasesPage />,
+      },
+      {
+        path: "/purchases/new",
+        element: <PurchaseInvoiceAddPage />,
+      },
+      {
+        path: "/purchases/:name",
+        element: <PurchaseInvoiceDetailsPage />,
+      },
+      {
+        path: "/sales",
+        element: <SalesInvoicesPage />,
+      },
+      {
+        path: "/sales/new",
+        element: <SalesInvoiceAddPage />,
+      },
+      {
+        path: "/sales/:name",
+        element: <SalesInvoiceDetailsPage />,
+      },
+      {
+        path: "/customer-receipts",
+        element: <CustomerReceiptsPage />,
+      },
+      {
+        path: "/supplier-payments",
+        element: <SupplierPaymentsPage />,
+      },
+      {
+        path: "/payment-entry/:name",
+        element: <PaymentEntryDetailsPage />,
+      },
+      {
+        path: "/pos",
+        element: <PointOfSalePage />,
+      },
+      {
+        path: "/payments",
+        element: <GenericLandingPage />,
+      },
+      ...menuItems.reduce((acc, item) => {
+        if (item.subMenus) {
+          acc.push(...item.subMenus.map(subItem => {
+            if (subItem.to === '/vendor-balance') {
+              return {
+                path: subItem.to,
+                element: <VendorBalancePage />,
+              }
+            } else if (subItem.to === '/customer-balances') {
+              return {
+                path: subItem.to,
+                element: <CustomerBalancePage />,
+              }
+            }
+            return {
+              path: subItem.to,
+              element: <GenericLandingPage />,
+            }
+          }));
+        } else if (item.to !== '/buying' && item.to !== '/selling' && item.to !== '/customers' && item.to !== '/payments') {
+          acc.push({
+            path: item.to,
+            element: <GenericLandingPage />,
+          });
+        }
+        return acc;
+      }, [] as { path: string; element: JSX.Element; }[]),
     ],
-    errorElement: <div>Something went wrong</div>,
+    errorElement: <div>Something went wrong is here</div>,
   },
   {
     path: "/login",

@@ -1,0 +1,21 @@
+.no-print {
+    display: flex;
+}
+
+.a4-size {
+    width: 210mm;
+    height: 297mm;
+    margin: auto;
+}
+
+@media print {
+  .no-print {
+    display: none;
+  }
+  .print-preview {
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+  }
+}

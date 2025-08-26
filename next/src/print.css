@@ -1,0 +1,33 @@
+@page {
+  size: A4;
+  margin: 20mm 15mm;
+}
+@media print {
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  .header-space, .footer-space {
+    height: 120px;
+  }
+  .header {
+    position: fixed; top: 0; left:0; right:0;
+    height: 120px; padding: 10px;
+    background: #f8f8f8; border-bottom: 1px solid #ccc;
+  }
+  .footer {
+    position: fixed; bottom: 0; left:0; right:0;
+    height: 60px; padding: 5px;
+    background: #f8f8f8; border-top: 1px solid #ccc;
+    font-size: 12px; text-align: center;
+  }
+  .content {
+    margin-top: 120px;
+    margin-bottom: 60px;
+  }
+  table.items { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  table.items th, table.items td {
+    border: 1px solid #aaa; padding: 6px;
+  }
+  table.items th { background: #eee; }
+  .no-break { page-break-inside: avoid; }
+}
+body { font-family: Arial, sans-serif; margin:0; padding:0; }

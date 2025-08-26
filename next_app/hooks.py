@@ -196,7 +196,7 @@ app_license = "mit"
 
 # Request Events
 # ----------------
-# before_request = ["next_app.utils.before_request"]
+before_request = ["next_app.next_app.custom_fields.setup_custom_fields_on_load"]
 # after_request = ["next_app.utils.after_request"]
 
 # Job Events

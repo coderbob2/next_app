@@ -64,10 +64,10 @@ export interface Customer{
 	primary_address?: string
 	/**	Customer Primary Contact : Link - Contact - Reselect, if the chosen contact is edited after save	*/
 	customer_primary_contact?: string
-	/**	Mobile No : Read Only	*/
-	mobile_no?: string
-	/**	Email Id : Read Only	*/
-	email_id?: string
+	/**	Custom Phone : Data	*/
+	custom_phone?: string
+	/**	Custom Email : Data	*/
+	custom_email?: string
 	/**	Tax ID : Data	*/
 	tax_id?: string
 	/**	Tax Category : Link - Tax Category	*/

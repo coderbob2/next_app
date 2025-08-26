@@ -1,19 +1,33 @@
-import type { Supplier } from "./types";
+import type { Supplier } from "@/types/Buying/Supplier";
+import type { KeyedMutator } from "swr";
+import { ActionsCell } from "@/features/suppliers/ActionsCell";
 
-export const columns = [
+export const getColumns = (mutate: KeyedMutator<any>, mutateCount: KeyedMutator<any>, onCloseDetails: () => void) => [
   {
-    key: "name" as keyof Supplier,
-    title: "Name",
-    visible: true,
+    accessorKey: "supplier_name",
+    header: "Supplier Name",
   },
   {
-    key: "supplier_name" as keyof Supplier,
-    title: "Supplier Name",
-    visible: true,
+    accessorKey: "supplier_type",
+    header: "Supplier Type",
   },
   {
-    key: "supplier_group" as keyof Supplier,
-    title: "Supplier Group",
-    visible: true,
+    accessorKey: "custom_phone",
+    header: "Phone",
+  },
+  {
+    accessorKey: "custom_email",
+    header: "Email",
+  },
+  {
+    id: "actions",
+    cell: ({ row }: { row: { original: Supplier } }) => (
+      <ActionsCell
+        supplier={row.original}
+        mutate={mutate}
+        mutateCount={mutateCount}
+        onCloseDetails={onCloseDetails}
+      />
+    ),
   },
 ];

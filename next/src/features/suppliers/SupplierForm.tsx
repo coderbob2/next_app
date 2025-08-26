@@ -1,83 +1,98 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useSaveSupplier } from "./supplierAPI";
-import type { Supplier } from "./types";
+import { Label } from "@/components/ui/label";
+import { useFrappeCreateDoc } from "frappe-react-sdk";
+import { useState } from "react";
+import type { KeyedMutator } from "swr";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const formSchema = z.object({
-  supplier_name: z.string().min(2, {
-    message: "Supplier name must be at least 2 characters.",
-  }),
-  supplier_group: z.string(),
-});
-
-export function SupplierForm({
-  data,
+export default function SupplierForm({
   onClose,
-  refetch,
+  mutate,
 }: {
-  data?: Supplier;
   onClose: () => void;
-  refetch: () => void;
+  mutate: KeyedMutator<any>;
 }) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: data ?? {
-      supplier_name: "",
-      supplier_group: "",
-    },
-  });
+  const [supplierName, setSupplierName] = useState("");
+  const [customPhone, setCustomPhone] = useState("");
+  const [customEmail, setCustomEmail] = useState("");
+  const [supplierType, setSupplierType] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const saveSupplier = useSaveSupplier();
+  const supplierTypes = ["Individual", "Company"];
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    saveSupplier(values as Supplier).then(() => {
-      refetch();
+  const { createDoc } = useFrappeCreateDoc();
+
+  const handleSubmit = () => {
+    setLoading(true);
+    createDoc("Supplier", {
+      supplier_name: supplierName,
+      custom_phone: customPhone,
+      custom_email: customEmail,
+      supplier_type: supplierType,
+    }).then(() => {
+      mutate();
       onClose();
+    }).finally(() => {
+      setLoading(false);
     });
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="supplier_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Supplier Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Supplier Name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="supplier_name">Supplier Name</Label>
+        <Input
+          id="supplier_name"
+          value={supplierName}
+          onChange={(e) => setSupplierName(e.target.value)}
         />
-        <FormField
-          control={form.control}
-          name="supplier_group"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Supplier Group</FormLabel>
-              <FormControl>
-                <Input placeholder="Supplier Group" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+      </div>
+      <div>
+        <Label htmlFor="custom_phone">Phone</Label>
+        <Input
+          id="custom_phone"
+          value={customPhone}
+          onChange={(e) => setCustomPhone(e.target.value)}
         />
-        <Button type="submit">Submit</Button>
-      </form>
-    </Form>
+      </div>
+      <div>
+        <Label htmlFor="custom_email">Email</Label>
+        <Input
+          id="custom_email"
+          value={customEmail}
+          onChange={(e) => setCustomEmail(e.target.value)}
+        />
+      </div>
+      <div>
+        <Label htmlFor="supplier_type">Supplier Type</Label>
+        <Select value={supplierType} onValueChange={setSupplierType}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a supplier type" />
+          </SelectTrigger>
+          <SelectContent>
+            {supplierTypes.map((type) => (
+              <SelectItem key={type} value={type}>
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex justify-end space-x-2">
+        <Button variant="outline" onClick={onClose} disabled={loading}>
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit} disabled={loading}>
+          {loading ? "Saving..." : "Save"}
+        </Button>
+      </div>
+    </div>
   );
 }

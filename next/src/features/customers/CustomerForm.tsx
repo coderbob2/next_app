@@ -1,79 +1,96 @@
-import { type FC } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useSaveCustomer } from "./customerAPI";
-import type { Customer } from "./types";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useFrappeCreateDoc } from "frappe-react-sdk";
+import { useState } from "react";
+import type { KeyedMutator } from "swr";
 
-interface CustomerFormProps {
-  data?: Customer;
+export default function CustomerForm({
+  onClose,
+  mutate,
+}: {
   onClose: () => void;
-  refetch: () => void;
-}
+  mutate: KeyedMutator<any>;
+}) {
+  const [customerName, setCustomerName] = useState("");
+  const [customPhone, setCustomPhone] = useState("");
+  const [customEmail, setCustomEmail] = useState("");
+  const [customerType, setCustomerType] = useState("Individual");
+  const [loading, setLoading] = useState(false);
 
-export const CustomerForm: FC<CustomerFormProps> = ({ data, onClose, refetch }) => {
-  const { control, handleSubmit, reset } = useForm<Customer>({ defaultValues: data });
-  const saveCustomer = useSaveCustomer();
+  const { createDoc } = useFrappeCreateDoc();
 
-  const onSubmit = async (data: Customer) => {
+  const handleSubmit = async () => {
+    setLoading(true);
     try {
-      await saveCustomer(data);
-      toast.success("Customer saved successfully");
+      await createDoc("Customer", {
+        customer_name: customerName,
+        custom_phone: customPhone,
+        custom_email: customEmail,
+        customer_type: customerType,
+      });
+      mutate();
       onClose();
-      refetch();
-    } catch (e) {
-      toast.error(`Error saving customer: ${String(e)}`);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-sm">
-      <Controller
-        name="name"
-        control={control}
-        rules={{ required: "Name is required" }}
-        render={({ field, fieldState }) => (
-          <>
-            <Input {...field} placeholder="Name" />
-            {fieldState.error && <span className="text-red-600 text-sm">{fieldState.error.message}</span>}
-          </>
-        )}
-      />
-      <Controller
-        name="customer_name"
-        control={control}
-        rules={{ required: "Customer Name is required" }}
-        render={({ field, fieldState }) => (
-          <>
-            <Input {...field} placeholder="Customer Name" />
-            {fieldState.error && <span className="text-red-600 text-sm">{fieldState.error.message}</span>}
-          </>
-        )}
-      />
-      <Controller
-        name="customer_group"
-        control={control}
-        rules={{ required: "Customer Group is required" }}
-        render={({ field, fieldState }) => (
-          <>
-            <Input {...field} placeholder="Customer Group" />
-            {fieldState.error && <span className="text-red-600 text-sm">{fieldState.error.message}</span>}
-          </>
-        )}
-      />
-      <Controller
-        name="customer_type"
-        control={control}
-        rules={{ required: "Customer Type is required" }}
-        render={({ field, fieldState }) => (
-          <>
-            <Input {...field} placeholder="Customer Type" />
-            {fieldState.error && <span className="text-red-600 text-sm">{fieldState.error.message}</span>}
-          </>
-        )}
-      />
-      <Button type="submit">Save Customer</Button>
-    </form>
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="customer_name">Customer Name</Label>
+        <Input
+          id="customer_name"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+        />
+      </div>
+      <div>
+        <Label htmlFor="custom_phone">Phone</Label>
+        <Input
+          id="custom_phone"
+          value={customPhone}
+          onChange={(e) => setCustomPhone(e.target.value)}
+        />
+      </div>
+      <div>
+        <Label htmlFor="custom_email">Email</Label>
+        <Input
+          id="custom_email"
+          value={customEmail}
+          onChange={(e) => setCustomEmail(e.target.value)}
+        />
+      </div>
+      <div>
+        <Label htmlFor="customer_type">Customer Type</Label>
+        <Select value={customerType} onValueChange={setCustomerType}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a customer type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Individual">Individual</SelectItem>
+            <SelectItem value="Company">Company</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex justify-end space-x-2">
+        <Button variant="outline" onClick={onClose} disabled={loading}>
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit} disabled={loading}>
+          {loading ? "Saving..." : "Save"}
+        </Button>
+      </div>
+    </div>
   );
-};
+}

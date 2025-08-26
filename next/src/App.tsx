@@ -1,22 +1,25 @@
-import { useFrappeAuth } from 'frappe-react-sdk'
-import LoginPage from './pages/LoginPage'
-import Spinner from './components/ui/spinner'
-import DashboardLayout from './components/layouts/DashboardLayout'
-
+import { useFrappeAuth } from 'frappe-react-sdk';
+import { Navigate, Outlet } from 'react-router-dom';
+import Spinner from '@/components/ui/spinner';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import { Toaster } from '@/components/ui/sonner';
 function App() {
-  const { currentUser, isLoading } = useFrappeAuth()
+  const { currentUser, isLoading } = useFrappeAuth();
+
+  if (isLoading) {
+    return <Spinner />;
+  }
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
-    <div className="App">
-      {isLoading ? (
-        <Spinner />
-      ) : currentUser ? (
-        <DashboardLayout />
-      ) : (
-        <LoginPage />
-      )}
-    </div>
-  )
+    <DashboardLayout>
+      <Outlet />
+      <Toaster />
+    </DashboardLayout>
+  );
 }
 
-export default App
+export default App;

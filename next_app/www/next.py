@@ -32,3 +32,21 @@ def get_context(context):
     })
 
     return context
+
+def add_my_custom_field():
+    """Adds a custom field 'my_custom_field' to the 'Customer' DocType."""
+    if not frappe.db.exists("Custom Field", {"dt": "Customer", "fieldname": "phone_no"}):
+        custom_field = frappe.new_doc("Custom Field")
+        custom_field.dt = "Customer"
+        custom_field.label = "Phone No"
+        custom_field.fieldname = "phone_no"
+        custom_field.fieldtype = "Data"
+        custom_field.read_only = 0
+        custom_field.save(ignore_permission=1)
+        frappe.msgprint("Custom field 'Phone No' added to Customer DocType.")
+        print("Custom field 'Phone No' added to Customer DocType.")
+    else:
+        frappe.msgprint("Custom field 'Phone No' already exists on Customer DocType.")
+        print("Custom field 'Phone No' already exists on Customer DocType.")
+
+    frappe.db.commit()
