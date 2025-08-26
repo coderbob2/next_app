@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { menuItems } from './menuItems';
 import { useFrappeGetCall } from 'frappe-react-sdk';
-import nextLogo from '@/assets/next_logo.png';
 
 interface SideNavProps {
   isOpen: boolean;
@@ -10,12 +9,12 @@ interface SideNavProps {
 }
 
 const SideNav: React.FC<SideNavProps> = ({ isOpen, toggleSideNav }) => {
-  const [companyAbbr, setCompanyAbbr] = useState<string>('');
+  const [companyName, setCompanyName] = useState<string>('');
   const { data: companyData, error } = useFrappeGetCall('next_app.next_app.utils.get_company_name', {}, 'get_company_name');
 
   useEffect(() => {
     if (companyData) {
-      setCompanyAbbr(companyData.message);
+      setCompanyName(companyData.message);
     }
   }, [companyData]);
 
@@ -33,11 +32,11 @@ const SideNav: React.FC<SideNavProps> = ({ isOpen, toggleSideNav }) => {
         } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:w-64 min-w-64`}
       >
         <div className="flex flex-col items-center mb-8 pt-4">
-          <img src={nextLogo} alt="Logo" className="h-16 w-16 mb-2" />
-          <div className="text-xl font-bold">{companyAbbr || 'MyApp'}</div>
+          <img src="/src/assets/next_logo.png" alt="Logo" className="h-16 w-16 mb-4" />
+          <div className="text-xl font-bold">{companyName || 'MyApp'}</div>
         </div>
-        <div className="flex justify-end items-center mb-8">
-          <button onClick={toggleSideNav} className="text-white md:hidden absolute top-4 right-4">
+        <div className="flex justify-between items-center mb-8">
+          <button onClick={toggleSideNav} className="text-white md:hidden">
             <svg
               className="w-6 h-6"
               fill="none"
