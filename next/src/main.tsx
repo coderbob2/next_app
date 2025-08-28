@@ -36,6 +36,7 @@ import StockTransferPage from "./pages/StockTransferPage";
 import StockAdjustmentPage from "./pages/StockAdjustmentPage";
 import Dashboard from './pages/Dashboard';
 import CustomExchangeRatePage from './pages/CustomExchangeRatePage';
+import WarehousesPage from './pages/WarehousesPage';
 import type { JSX } from 'react';
 
 const queryClient = new QueryClient();
@@ -164,6 +165,12 @@ const router = createBrowserRouter([
               return {
                 path: subItem.to,
                 element: <CustomExchangeRatePage />,
+              }
+            }
+            if (subItem.to === '/warehouses') {
+              return {
+                path: subItem.to,
+                element: <WarehousesPage />,
               }
             }
             return {

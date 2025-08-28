@@ -1,4 +1,4 @@
-import { FaTachometerAlt, FaCashRegister, FaTruckLoading, FaHandHoldingUsd, FaBox, FaFileInvoice, FaUsers, FaUserTag, FaCog, FaChartBar, FaExchangeAlt, FaDoorClosed, FaMoneyBillWave, FaBook } from 'react-icons/fa';
+import { FaTachometerAlt, FaCashRegister, FaTruckLoading, FaHandHoldingUsd, FaBox, FaFileInvoice, FaUsers, FaUserTag, FaCog, FaChartBar, FaExchangeAlt, FaDoorClosed, FaMoneyBillWave, FaBook, FaWarehouse } from 'react-icons/fa';
 
 export const menuItems = [
     { to: '/dashboard', text: 'Dashboard', icon: <FaTachometerAlt /> },
@@ -58,6 +58,7 @@ export const menuItems = [
         icon: <FaCog />,
         subMenus: [
             { to: '/exchange-rate', text: 'Exchange Rate' },
+            { to: '/warehouses', text: 'Warehouses', icon: <FaWarehouse /> }
         ]
     },
 ];
