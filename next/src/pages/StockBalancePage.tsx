@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { DropdownFilter } from "@/components/ui/dropdown-filter";
 import { useStockBalance } from "@/features/stock/stockAPI";
 import type { StockBalanceReportRow } from "@/features/stock/stockAPI";
+import { RenderContent } from "@/components/ui/renderContent";
 
 interface Sort {
     field: string;
@@ -150,20 +151,24 @@ export default function StockBalancePage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading && <TableRow><TableCell colSpan={columns.length}>Loading...</TableCell></TableRow>}
-                        {error && <TableRow><TableCell colSpan={columns.length}>{error.message}</TableCell></TableRow>}
-                        {data?.map((row, index) => (
-                            <TableRow
-                                key={`${row.item_code}-${row.warehouse}`}
-                                className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''}`}
-                            >
-                                {columns.map((column) => (
-                                    <TableCell key={column.accessorKey || column.id} className="py-1">
-                                        {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey as keyof StockBalanceReportRow]}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        ))}
+                        <RenderContent
+                            isLoading={loading}
+                            error={error}
+                            data={data}
+                            columns={columns}
+                            renderRow={(row, index) => (
+                                <TableRow
+                                    key={`${row.item_code}-${row.warehouse}`}
+                                    className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''}`}
+                                >
+                                    {columns.map((column) => (
+                                        <TableCell key={column.accessorKey || column.id} className="py-1">
+                                            {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey as keyof StockBalanceReportRow]}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            )}
+                        />
                     </TableBody>
                 </Table>
             </div>

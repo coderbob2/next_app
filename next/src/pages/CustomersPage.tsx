@@ -32,6 +32,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { RenderContent } from "@/components/ui/renderContent";
 
 interface Sort {
   field: string;
@@ -185,31 +186,35 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={columns.length}>Loading...</TableCell></TableRow>}
-            {error && <TableRow><TableCell colSpan={columns.length}>{error.message}</TableCell></TableRow>}
-            {customers?.map((customer, index) => (
-              <TableRow
-                key={customer.name}
-                className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
-                onClick={() => setSelectedCustomer(customer.name)}
-              >
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.id || column.accessorKey as string}
-                    className="py-1"
-                    onClick={(e) => {
-                      if (column.id !== "actions") {
-                        setSelectedCustomer(customer.name);
-                      } else {
-                        e.stopPropagation();
-                      }
-                    }}
-                  >
-                    {column.cell ? column.cell({ row: { original: customer } }) : customer[column.accessorKey as keyof Customer]}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            <RenderContent
+              isLoading={isLoading}
+              error={error}
+              data={customers}
+              columns={columns}
+              renderRow={(customer, index) => (
+                <TableRow
+                  key={customer.name}
+                  className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
+                  onClick={() => setSelectedCustomer(customer.name)}
+                >
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.id || column.accessorKey as string}
+                      className="py-1"
+                      onClick={(e) => {
+                        if (column.id !== "actions") {
+                          setSelectedCustomer(customer.name);
+                        } else {
+                          e.stopPropagation();
+                        }
+                      }}
+                    >
+                      {column.cell ? column.cell({ row: { original: customer } }) : customer[column.accessorKey as keyof Customer]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
+            />
           </TableBody>
         </Table>
       </div>

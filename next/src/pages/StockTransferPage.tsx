@@ -30,6 +30,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { RenderContent } from "@/components/ui/renderContent";
 
 interface Sort {
   field: string;
@@ -125,20 +126,24 @@ export default function StockTransferPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={columns.length}>Loading...</TableCell></TableRow>}
-            {error && <TableRow><TableCell colSpan={columns.length}>{error.message}</TableCell></TableRow>}
-            {stockEntries?.map((entry, index) => (
-              <TableRow
-                key={entry.name}
-                className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
-              >
-                {columns.map((column: { accessorKey: string; header: string }) => (
-                  <TableCell key={column.accessorKey} className="py-1">
-                    {entry[column.accessorKey as keyof StockEntry]}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            <RenderContent
+              isLoading={isLoading}
+              error={error}
+              data={stockEntries}
+              columns={columns}
+              renderRow={(entry, index) => (
+                <TableRow
+                  key={entry.name}
+                  className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
+                >
+                  {columns.map((column: { accessorKey: string; header: string }) => (
+                    <TableCell key={column.accessorKey} className="py-1">
+                      {entry[column.accessorKey as keyof StockEntry]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
+            />
           </TableBody>
         </Table>
       </div>

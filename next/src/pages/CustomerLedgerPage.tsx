@@ -23,6 +23,8 @@ import * as XLSX from "xlsx";
 
 import { type DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/ui/daterangepicker";
+import { RenderContent } from "@/components/ui/renderContent";
+
 interface CustomerLedgerReportRow {
   customer: string;
   customer_name: string;
@@ -206,39 +208,24 @@ export default function CustomerLedgerPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4">
-                  Loading...
-                </TableCell>
-              </TableRow>
-            )}
-            {error && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4 text-red-500">
-                  {error.message}
-                </TableCell>
-              </TableRow>
-            )}
-            {!loading && !error && reportData.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4 text-muted-foreground">
-                  No data available.
-                </TableCell>
-              </TableRow>
-            )}
-            {reportData?.map((row) => (
-              <TableRow key={row.customer} className="h-10">
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.fieldname}
-                    className={`py-1`}
-                  >
-                    {row[column.fieldname as keyof CustomerLedgerReportRow]}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            <RenderContent
+              isLoading={loading}
+              error={error}
+              data={reportData}
+              columns={columns}
+              renderRow={(row) => (
+                <TableRow key={row.customer} className="h-10">
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.fieldname}
+                      className={`py-1`}
+                    >
+                      {row[column.fieldname as keyof CustomerLedgerReportRow]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
+            />
           </TableBody>
         </Table>
       </div>

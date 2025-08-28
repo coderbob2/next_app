@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useFrappePostCall, useFrappeGetDocList } from "frappe-react-sdk";
+import { RenderContent } from "@/components/ui/renderContent";
 import {
   Table,
   TableBody,
@@ -179,42 +180,27 @@ export default function CustomerBalancePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4">
-                  Loading...
-                </TableCell>
-              </TableRow>
-            )}
-            {error && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4 text-red-500">
-                  {error.message}
-                </TableCell>
-              </TableRow>
-            )}
-            {!loading && !error && reportData.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4 text-muted-foreground">
-                  No data available.
-                </TableCell>
-              </TableRow>
-            )}
-            {reportData?.map((row) => (
-              <TableRow key={row.customer} className="h-10">
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.fieldname}
-                    className={`py-1`}
-                  >
-                    {row[column.fieldname as keyof CustomerBalanceReportRow]}
+            <RenderContent
+              isLoading={loading}
+              error={error}
+              data={reportData}
+              columns={columns}
+              renderRow={(row) => (
+                <TableRow key={row.customer} className="h-10">
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.fieldname}
+                      className={`py-1`}
+                    >
+                      {row[column.fieldname as keyof CustomerBalanceReportRow]}
+                    </TableCell>
+                  ))}
+                  <TableCell>
+                    <ActionsCell customer={row.customer} />
                   </TableCell>
-                ))}
-                <TableCell>
-                  <ActionsCell customer={row.customer} />
-                </TableCell>
-              </TableRow>
-            ))}
+                </TableRow>
+              )}
+            />
           </TableBody>
         </Table>
       </div>

@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
 import { useFrappeGetDocList, useFrappeGetDocCount } from "frappe-react-sdk";
 import type { Filter } from "frappe-react-sdk";
+import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUp, ArrowDown, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useDebounce } from "@/lib/useDebounce";
-import { getColumns } from "@/features/stock/columns";
-import { StockAdjustmentForm } from "@/features/stock/StockAdjustmentForm";
-import type { StockEntry } from "@/types/Stock/StockEntry";
+import { getColumns } from "@/features/custom_exchange_rate/columns";
+import type { CustomExchangeRate } from "@/types/NextApp/CustomExchangeRate";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -31,32 +31,36 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { RenderContent } from "@/components/ui/renderContent";
+import CustomExchangeRateForm from "../features/custom_exchange_rate/CustomExchangeRateForm";
 
 interface Sort {
   field: string;
   order: 'asc' | 'desc';
 }
 
-export default function StockAdjustmentPage() {
+export default function CustomExchangeRatePage() {
   const [showForm, setShowForm] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<Sort>({ field: 'name', order: 'asc' });
-  const [itemName, setItemName] = useState("");
+  const [sort, setSort] = useState<Sort>({ field: 'date', order: 'desc' });
+  const [fromCurrency, setFromCurrency] = useState("");
+  const [toCurrency, setToCurrency] = useState("");
 
-  const debouncedItemName = useDebounce(itemName, 500);
+  const debouncedFromCurrency = useDebounce(fromCurrency, 500);
+  const debouncedToCurrency = useDebounce(toCurrency, 500);
 
-  const filters: Filter[] = [
-    ["purpose", "=", "Material Receipt"]
-  ];
-  if (debouncedItemName) {
-    filters.push(["name", "like", `%${debouncedItemName}%`]);
+  const filters: Filter[] = [];
+  if (debouncedFromCurrency) {
+    filters.push(["from_currency", "like", `%${debouncedFromCurrency}%`]);
+  }
+  if (debouncedToCurrency) {
+    filters.push(["to_currency", "like", `%${debouncedToCurrency}%`]);
   }
 
-  const { data: itemCount, mutate: mutateCount } = useFrappeGetDocCount("Stock Entry", filters);
+  const { data: exchangeRateCount, mutate: mutateCount } = useFrappeGetDocCount("Custom Exchange Rate", filters);
 
-  const { data: items, isLoading, error, mutate } = useFrappeGetDocList<StockEntry>("Stock Entry", {
-    fields: ["name", "from_warehouse", "to_warehouse", "posting_date", "posting_time", "total_amount"],
+  const { data: exchangeRates, isLoading, error, mutate } = useFrappeGetDocList<CustomExchangeRate>("Custom Exchange Rate", {
+    fields: ["name", "date", "from_currency", "to_currency", "ex_rate"],
     limit_start: (page - 1) * pageSize,
     limit: pageSize,
     orderBy: sort,
@@ -65,31 +69,37 @@ export default function StockAdjustmentPage() {
 
   const columns = useMemo(() => getColumns(mutate, mutateCount), [mutate, mutateCount]);
 
-  const totalPages = itemCount ? Math.ceil(itemCount / pageSize) : 1;
+  const totalPages = exchangeRateCount ? Math.ceil(exchangeRateCount / pageSize) : 1;
 
   return (
     <div className="p-4 overflow-x-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Stock Adjustment</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Custom Exchange Rates</h1>
         <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto sm:justify-end">
           <Input
-            placeholder="Filter by name..."
-            value={itemName}
-            onChange={(e) => setItemName(e.target.value)}
+            placeholder="Filter by from currency..."
+            value={fromCurrency}
+            onChange={(e) => setFromCurrency(e.target.value)}
+            className="w-full sm:w-64"
+          />
+          <Input
+            placeholder="Filter by to currency..."
+            value={toCurrency}
+            onChange={(e) => setToCurrency(e.target.value)}
             className="w-full sm:w-64"
           />
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Adjustment
+                Add Exchange Rate
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Adjustment</DialogTitle>
+                <DialogTitle>Add Exchange Rate</DialogTitle>
               </DialogHeader>
-              <StockAdjustmentForm
+              <CustomExchangeRateForm
                 onClose={() => setShowForm(false)}
                 mutate={mutate}
               />
@@ -103,21 +113,22 @@ export default function StockAdjustmentPage() {
             <TableRow className="bg-gray-200">
               {columns.map((column) => (
                 <TableHead
-                  key={column.id || column.accessorKey as string}
+                  key={(column as ColumnDef<CustomExchangeRate>).id || (column as any).accessorKey}
                   onClick={() => {
-                    if (column.accessorKey) {
-                      if (sort.field === column.accessorKey) {
+                    const accessorKey = (column as any).accessorKey;
+                    if (accessorKey) {
+                      if (sort.field === accessorKey) {
                         setSort({ ...sort, order: sort.order === 'asc' ? 'desc' : 'asc' });
                       } else {
-                        setSort({ field: column.accessorKey as string, order: 'asc' });
+                        setSort({ field: accessorKey, order: 'asc' });
                       }
                     }
                   }}
-                  className={`${column.accessorKey ? "cursor-pointer" : ""} py-2 font-bold`}
+                  className={`${(column as any).accessorKey ? "cursor-pointer" : ""} py-2 font-bold`}
                 >
                   <div className="flex items-center">
-                    {column.header as React.ReactNode}
-                    {column.accessorKey && sort.field === column.accessorKey && (
+                    {(column as ColumnDef<CustomExchangeRate>).header as React.ReactNode}
+                    {(column as any).accessorKey && sort.field === (column as any).accessorKey && (
                       sort.order === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
                     )}
                   </div>
@@ -129,16 +140,19 @@ export default function StockAdjustmentPage() {
             <RenderContent
               isLoading={isLoading}
               error={error}
-              data={items}
+              data={exchangeRates}
               columns={columns}
-              renderRow={(item, index) => (
+              renderRow={(exchangeRate, index) => (
                 <TableRow
-                  key={item.name}
-                  className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
+                  key={exchangeRate.name}
+                  className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''}`}
                 >
                   {columns.map((column) => (
-                    <TableCell key={column.id || column.accessorKey as string} className="py-1">
-                      {item[column.accessorKey as keyof StockEntry]}
+                    <TableCell
+                      key={(column as ColumnDef<CustomExchangeRate>).id || (column as any).accessorKey}
+                      className="py-1"
+                    >
+                      {column.cell && typeof column.cell === 'function' ? column.cell({ row: { original: exchangeRate } } as any) : exchangeRate[(column as any).accessorKey as keyof CustomExchangeRate]}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -149,7 +163,7 @@ export default function StockAdjustmentPage() {
       </div>
       <div className="flex flex-col sm:flex-row items-center justify-between py-4">
         <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
-          Showing {Math.min(page * pageSize, itemCount ?? 0)} of {itemCount} items
+          Showing {Math.min(page * pageSize, exchangeRateCount ?? 0)} of {exchangeRateCount} exchange rates
         </div>
         <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
           <Select value={`${pageSize}`} onValueChange={(value) => setPageSize(Number(value))}>

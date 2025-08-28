@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { DateRangePicker } from "@/components/ui/daterangepicker";
 import type { DateRange } from "react-day-picker";
 import { DropdownFilter } from "@/components/ui/dropdown-filter";
+import { RenderContent } from "@/components/ui/renderContent";
 
 interface Sort {
   field: string;
@@ -245,21 +246,25 @@ export default function SalesInvoicesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && <TableRow><TableCell colSpan={columns.length}>Loading...</TableCell></TableRow>}
-            {error && <TableRow><TableCell colSpan={columns.length}>{error.message}</TableCell></TableRow>}
-            {invoices?.map((invoice, index) => (
-              <TableRow
-                key={invoice.name}
-                className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
-                onClick={() => navigate(`/sales/${invoice.name}`)}
-              >
-                {columns.map((column) => (
-                  <TableCell key={column.accessorKey as string} className="py-1">
-                    {column.cell ? column.cell({ row: { original: invoice } }) : invoice[column.accessorKey as keyof SalesInvoice]}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            <RenderContent
+              isLoading={loading}
+              error={error}
+              data={invoices}
+              columns={columns}
+              renderRow={(invoice, index) => (
+                <TableRow
+                  key={invoice.name}
+                  className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
+                  onClick={() => navigate(`/sales/${invoice.name}`)}
+                >
+                  {columns.map((column) => (
+                    <TableCell key={column.accessorKey as string} className="py-1">
+                      {column.cell ? column.cell({ row: { original: invoice } }) : invoice[column.accessorKey as keyof SalesInvoice]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
+            />
           </TableBody>
         </Table>
       </div>

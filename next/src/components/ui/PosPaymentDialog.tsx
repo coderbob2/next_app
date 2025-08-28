@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Combobox } from '@/components/ui/combobox';
 import { NumericFormat } from 'react-number-format';
 import { useFrappeGetDocList } from 'frappe-react-sdk';
+import { FaCheck } from 'react-icons/fa';
 
 interface CartItem {
     name: string;
@@ -44,6 +45,21 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
     const [account, setAccount] = useState("");
     const [paidAmount, setPaidAmount] = useState(0);
     const [remarks, setRemarks] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const clearFields = () => {
+        setPaymentStatus("");
+        setStockStatus("");
+        setModeOfPayment("");
+        setAccount("");
+        setPaidAmount(0);
+        setRemarks("");
+    };
+
+    const handleClose = () => {
+        clearFields();
+        onClose();
+    };
 
     const { data: modeOfPayments, isLoading: modeOfPaymentsLoading } = useFrappeGetDocList("Mode of Payment", {
         fields: ["name"],
@@ -55,9 +71,18 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
         return modeOfPayments.map((m) => ({ label: m.name, value: m.name }));
     }, [modeOfPayments]);
 
+    const { data: modeOfPaymentType } = useFrappeGetDocList("Mode of Payment", {
+        fields: ["type"],
+        filters: [["name", "=", modeOfPayment]],
+        limit: 1
+    });
+
     const { data: accounts, isLoading: accountsLoading } = useFrappeGetDocList("Account", {
         fields: ["name"],
-        filters: [["is_group", "=", 0]],
+        filters: modeOfPaymentType?.[0]?.type ? [
+            ["is_group", "=", 0],
+            ["account_type", "=", modeOfPaymentType?.[0]?.type === "Cash" ? "Cash" : "Bank"]
+        ] : [["is_group", "=", 0]],
         limit: 1000
     });
 
@@ -76,40 +101,52 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
         }
     }, [paymentStatus, total]);
 
-    const handleSubmit = () => {
-        onSubmit({
-            paymentStatus,
-            modeOfPayment,
-            account,
-            paidAmount,
-            remarks,
-            update_stock: stockStatus === "Taken"
-        });
+    useEffect(() => {
+        setAccount("");
+    }, [modeOfPayment]);
+
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        try {
+            await onSubmit({
+                paymentStatus,
+                modeOfPayment,
+                account,
+                paidAmount,
+                remarks,
+                update_stock: stockStatus === "Taken"
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const isConfirmDisabled = () => {
+        if (!paymentStatus || !stockStatus) return true;
+        if ((paymentStatus === "Paid" || paymentStatus === "Partly Paid") && (!modeOfPayment || !account)) return true;
+        return false;
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={(isOpen) => {
             if (!isOpen) {
-                onClose();
+                handleClose();
             }
         }}>
-            <DialogContent className="sm:max-w-[425px] bg-white rounded-lg shadow-xl p-6">
-                <DialogHeader className="mb-4">
-                    <DialogTitle className="text-xl font-semibold text-gray-900">Payment Details</DialogTitle>
-                    <DialogDescription className="text-sm text-gray-500">
-                        Select payment status and enter payment details.
-                    </DialogDescription>
+            <DialogContent onInteractOutside={(e) => {
+                e.preventDefault();
+            }} className="max-w-sm bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh]">
+                <DialogHeader className="p-4 border-b">
+                    <DialogTitle className="text-lg font-semibold text-gray-900">Confirm Sales</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="paymentStatus" className="text-sm font-medium text-gray-700">
-                            Payment Status
-                        </Label>
+                <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="paymentStatus" className="text-right">Payment Status</Label>
                         <Select
                             value={paymentStatus}
                             onValueChange={setPaymentStatus}
                         >
-                            <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-md">
+                            <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-md h-9 col-span-2">
                                 <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -119,15 +156,13 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="stockStatus" className="text-sm font-medium text-gray-700">
-                            Stock Status
-                        </Label>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="stockStatus" className="text-right">Stock Status</Label>
                         <Select
                             value={stockStatus}
                             onValueChange={setStockStatus}
                         >
-                            <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-md">
+                            <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-md h-9 col-span-2">
                                 <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -139,37 +174,34 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
 
                     {(paymentStatus === "Paid" || paymentStatus === "Partly Paid") && (
                         <>
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label htmlFor="modeOfPayment" className="text-sm font-medium text-gray-700">
-                                    Mode of Payment
-                                </Label>
+                            <div className="grid grid-cols-3 items-center gap-4">
+                                <Label htmlFor="modeOfPayment" className="text-right">Mode of Payment</Label>
                                 <Combobox
                                     options={modeOfPaymentOptions}
                                     value={modeOfPayment}
                                     onChange={setModeOfPayment}
                                     placeholder="Select mode of payment"
                                     isLoading={modeOfPaymentsLoading}
-                                    className="w-full"
+                                    className="w-full col-span-2"
                                 />
                             </div>
-                            <div className="grid grid-cols-1 gap-2">
-                                <Label htmlFor="account" className="text-sm font-medium text-gray-700">
-                                    Account
-                                </Label>
+                            <div className="grid grid-cols-3 items-center gap-4">
+                                <Label htmlFor="account" className="text-right">Account</Label>
                                 <Combobox
                                     options={accountOptions}
                                     value={account}
                                     onChange={setAccount}
                                     placeholder="Select account"
                                     isLoading={accountsLoading}
-                                    className="w-full"
+                                    className="w-full col-span-2"
+                                    disabled={!modeOfPayment}
                                 />
                             </div>
                         </>
                     )}
 
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label className="text-sm font-medium text-gray-700">Total Amount</Label>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label className="text-right">Total Amount</Label>
                         <NumericFormat
                             value={total}
                             displayType="text"
@@ -177,14 +209,12 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
                             prefix={`${currency} `}
                             decimalScale={2}
                             fixedDecimalScale
-                            className="w-full bg-gray-50 border-gray-300 rounded-md p-2"
+                            className="w-full bg-gray-50 border-gray-300 rounded-md p-2 h-9 col-span-2"
                             disabled
                         />
                     </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="paidAmount" className="text-sm font-medium text-gray-700">
-                            Paid Amount
-                        </Label>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="paidAmount" className="text-right">Paid Amount</Label>
                         <NumericFormat
                             value={paidAmount}
                             onValueChange={(values) => setPaidAmount(values.floatValue || 0)}
@@ -193,12 +223,12 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
                             decimalScale={2}
                             allowNegative={false}
                             prefix={`${currency} `}
-                            className="w-full border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-md"
+                            className="w-full border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-md h-9 col-span-2"
                             disabled={paymentStatus === 'Paid' || paymentStatus === 'Not Paid'}
                         />
                     </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label className="text-sm font-medium text-gray-700">Outstanding Amount</Label>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label className="text-right">Outstanding Amount</Label>
                         <NumericFormat
                             value={total - paidAmount}
                             displayType="text"
@@ -206,35 +236,34 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
                             prefix={`${currency} `}
                             decimalScale={2}
                             fixedDecimalScale
-                            className="w-full bg-gray-50 border-gray-300 rounded-md p-2"
+                            className="w-full bg-gray-50 border-gray-300 rounded-md p-2 h-9 col-span-2"
                             disabled
                         />
                     </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
-                            Remarks
-                        </Label>
+                    <div className="grid grid-cols-3 items-center gap-4">
+                        <Label htmlFor="remarks" className="text-right">Remarks</Label>
                         <Input
                             id="remarks"
                             value={remarks}
                             onChange={(e) => setRemarks(e.target.value)}
-                            className="w-full border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-md"
+                            className="w-full border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-md h-9 col-span-2"
                         />
                     </div>
                 </div>
-                <DialogFooter className="mt-6 flex justify-end space-x-2">
+                <DialogFooter className="pt-6 border-t flex justify-end space-x-2">
                     <Button
                         variant="outline"
-                        onClick={onClose}
-                        className="border-gray-300 text-gray-700 hover:bg-gray-100 rounded-md"
+                        onClick={handleClose}
+                        className="border-red-600 text-red-700 hover:bg-gray-100 rounded-md"
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleSubmit}
-                        className="bg-blue-600 text-white hover:bg-blue-700 rounded-md"
+                        disabled={isConfirmDisabled() || isSubmitting}
+                        className={`bg-green-600 text-white hover:bg-green-700 rounded-md flex items-center justify-center ${(isConfirmDisabled() || isSubmitting) ? 'cursor-not-allowed bg-gray-400' : ''}`}
                     >
-                        Submit Payment
+                        {isSubmitting ? 'Submitting...' : <><FaCheck className="mr-2" /> Confirm</>}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -25,26 +25,28 @@ interface ComboboxProps {
   emptyText?: string;
   isLoading?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
-export function Combobox({ options, value, onChange, placeholder, emptyText, isLoading, className }: ComboboxProps) {
+export function Combobox({ options, value, onChange, placeholder, emptyText, isLoading, className, disabled }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-[200px] justify-between", className)}
-        >
-          {value
-            ? options.find((option) => option.value === value)?.label
-            : placeholder ?? "Select an option..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
+      <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+              <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className={cn("w-[200px] justify-between", className)}
+                  disabled={disabled}
+              >
+                  {value
+                      ? options.find((option) => option.value === value)?.label
+                      : placeholder ?? "Select an option..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+          </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder={placeholder ?? "Search..."} />

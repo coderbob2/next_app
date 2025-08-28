@@ -11,7 +11,7 @@ import { useState } from "react";
 import { Printer, CreditCard, X, ArrowLeft } from "lucide-react";
 import PrintPreviewDialog from "@/components/ui/PrintPreviewDialog";
 import '@/print.css';
-import type { a } from "node_modules/@tanstack/react-query-devtools/build/modern/ReactQueryDevtools-Cn7cKi7o";
+import Spinner from "@/components/ui/spinner";
 
 export default function SalesInvoiceDetailsPage() {
   const { name } = useParams<{ name: string }>();
@@ -35,7 +35,9 @@ export default function SalesInvoiceDetailsPage() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">
+      <Spinner />
+    </div>;
   }
 
   if (error) {

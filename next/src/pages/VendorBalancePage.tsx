@@ -20,6 +20,7 @@ import {
 import { ArrowUp, ArrowDown, FileDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import * as XLSX from "xlsx";
+import { RenderContent } from "@/components/ui/renderContent";
 
 interface VendorBalanceReportRow {
   supplier: string;
@@ -178,39 +179,24 @@ export default function VendorBalancePage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4">
-                  Loading...
-                </TableCell>
-              </TableRow>
-            )}
-            {error && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4 text-red-500">
-                  {error.message}
-                </TableCell>
-              </TableRow>
-            )}
-            {!loading && !error && reportData.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-4 text-muted-foreground">
-                  No data available.
-                </TableCell>
-              </TableRow>
-            )}
-            {reportData?.map((row) => (
-              <TableRow key={row.supplier} className="h-10">
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.fieldname}
-                    className={`py-1`}
-                  >
-                    {row[column.fieldname as keyof VendorBalanceReportRow]}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            <RenderContent
+              isLoading={loading}
+              error={error}
+              data={reportData}
+              columns={columns}
+              renderRow={(row) => (
+                <TableRow key={row.supplier} className="h-10">
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.fieldname}
+                      className={`py-1`}
+                    >
+                      {row[column.fieldname as keyof VendorBalanceReportRow]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
+            />
           </TableBody>
         </Table>
       </div>

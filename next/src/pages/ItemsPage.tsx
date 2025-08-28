@@ -31,6 +31,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { RenderContent } from "@/components/ui/renderContent";
 
 interface Sort {
   field: string;
@@ -165,20 +166,24 @@ export default function ItemsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={columns.length}>Loading...</TableCell></TableRow>}
-            {error && <TableRow><TableCell colSpan={columns.length}>{error.message}</TableCell></TableRow>}
-            {items?.map((item, index) => (
-              <TableRow
-                key={item.name}
-                className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
-              >
-                {columns.map((column) => (
-                  <TableCell key={column.id || column.accessorKey as string} className="py-1">
-                    {column.cell ? column.cell({ row: { original: item } }) : item[column.accessorKey as keyof Item]}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            <RenderContent
+              isLoading={isLoading}
+              error={error}
+              data={items}
+              columns={columns}
+              renderRow={(item, index) => (
+                <TableRow
+                  key={item.name}
+                  className={`h-10 ${index % 2 === 0 ? 'bg-gray-50' : ''} cursor-pointer`}
+                >
+                  {columns.map((column) => (
+                    <TableCell key={column.id || column.accessorKey as string} className="py-1">
+                      {column.cell ? column.cell({ row: { original: item } }) : item[column.accessorKey as keyof Item]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )}
+            />
           </TableBody>
         </Table>
       </div>

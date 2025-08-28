@@ -35,6 +35,8 @@ import StockLedgerPage from './pages/StockLedgerPage.tsx';
 import CustomerLedgerPage from './pages/CustomerLedgerPage.tsx';
 import StockTransferPage from "./pages/StockTransferPage";
 import StockAdjustmentPage from "./pages/StockAdjustmentPage";
+import Dashboard from './pages/Dashboard';
+import CustomExchangeRatePage from './pages/CustomExchangeRatePage';
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,10 @@ const router = createBrowserRouter([
       {
         path: "/home",
         element: <HomePage />,
+      },
+      {
+        path: "/dashboard",
+        element: <Dashboard />,
       },
       {
         path: "/customers",
@@ -154,12 +160,18 @@ const router = createBrowserRouter([
                 element: <CustomerBalancePage />,
               }
             }
+            if (subItem.to === '/exchange-rate') {
+              return {
+                path: subItem.to,
+                element: <CustomExchangeRatePage />,
+              }
+            }
             return {
               path: subItem.to,
               element: <GenericLandingPage />,
             }
           }));
-        } else if (item.to !== '/buying' && item.to !== '/selling' && item.to !== '/customers' && item.to !== '/payments') {
+        } else if (item.to !== '/buying' && item.to !== '/selling' && item.to !== '/customers' && item.to !== '/payments' && item.to !== '/settings') {
           acc.push({
             path: item.to,
             element: <GenericLandingPage />,
@@ -167,6 +179,10 @@ const router = createBrowserRouter([
         }
         return acc;
       }, [] as { path: string; element: JSX.Element; }[]),
+      {
+        path: "/settings",
+        element: <GenericLandingPage />,
+      },
     ],
     errorElement: <div>Something went wrong is here</div>,
   },

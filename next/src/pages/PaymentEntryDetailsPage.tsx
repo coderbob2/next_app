@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { X, ArrowLeft } from "lucide-react";
+import Spinner from "@/components/ui/spinner";
 
 export default function PaymentEntryDetailsPage() {
   const { name } = useParams<{ name: string }>();
@@ -24,7 +25,9 @@ export default function PaymentEntryDetailsPage() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">
+      <Spinner />
+    </div>;
   }
 
   if (error) {

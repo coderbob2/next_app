@@ -120,9 +120,10 @@ const PointOfSalePage: React.FC = () => {
     })
   }
 
-  const handlePaymentSubmit = async (paymentDetails: any) => {
-    try {
-      const isPaid = paymentDetails.paymentStatus === 'Paid' || (paymentDetails.paymentStatus === 'Partly Paid' && paymentDetails.paidAmount > 0);
+  const handlePaymentSubmit = (paymentDetails: any) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const isPaid = paymentDetails.paymentStatus === 'Paid' || (paymentDetails.paymentStatus === 'Partly Paid' && paymentDetails.paidAmount > 0);
 
       const payments = isPaid ? [{
         parentfield: 'payments',
@@ -135,8 +136,6 @@ const PointOfSalePage: React.FC = () => {
         account: paymentDetails.account,
         type: paymentDetails.modeOfPayment,
         base_amount: paymentDetails.paidAmount,
-        mop_conversion_rate: 0,
-        mop_amount: 0,
         doctype: 'Sales Invoice Payment'
       }] : [];
 
@@ -167,27 +166,30 @@ const PointOfSalePage: React.FC = () => {
       });
       setCart([]);
       setIsPaymentDialogOpen(false);
-      setStockUpdateKey(prevKey => prevKey + 1);
-    } catch (error: any) {
-      toast.error(JSON.parse(JSON.parse(error._server_messages)[0]).title.replace(
-          /<[^>]*>?/gm,
-          ""
-        )
-        ,{
-          description: JSON.parse(JSON.parse(error._server_messages)[0]).message.replace(
-          /<[^>]*>?/gm,
-          ""
-        ),
-          duration: 5000,
-          position: 'top-right',
-          style: {
-            borderColor: 'red',
-            color: 'red',
+        setStockUpdateKey(prevKey => prevKey + 1);
+        resolve(true);
+      } catch (error: any) {
+        toast.error(JSON.parse(JSON.parse(error._server_messages)[0]).title.replace(
+            /<[^>]*>?/gm,
+            ""
+          )
+          ,{
+            description: JSON.parse(JSON.parse(error._server_messages)[0]).message.replace(
+            /<[^>]*>?/gm,
+            ""
+          ),
+            duration: 5000,
+            position: 'top-right',
+            style: {
+              borderColor: 'red',
+              color: 'red',
+            }
           }
-        }
-      );
-      console.error(error);
-    }
+        );
+        console.error(error);
+        reject(error);
+      }
+    });
   };
 
   return (
@@ -209,7 +211,9 @@ const PointOfSalePage: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 {warehousesLoading ? (
-                  <SelectItem value="loading" disabled>Loading...</SelectItem>
+                  <div className="flex justify-center items-center h-24">
+                    <Spinner />
+                  </div>
                 ) : (
                   warehouses?.map((warehouse) => (
                     <SelectItem key={warehouse.name} value={warehouse.name}>
