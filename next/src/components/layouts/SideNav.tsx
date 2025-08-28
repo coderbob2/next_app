@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { menuItems } from './menuItems';
 import { useFrappeGetCall } from 'frappe-react-sdk';
+import logo from '../../assets/next_logo.png';
 
 interface SideNavProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ const SideNav: React.FC<SideNavProps> = ({ isOpen, toggleSideNav }) => {
         } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:w-64 min-w-64`}
       >
         <div className="flex flex-col items-center mb-8 pt-4">
-          <img src="/src/assets/next_logo.png" alt="Logo" className="h-16 w-16 mb-4" />
+          <img src={logo} alt="Logo" className="h-16 w-16 mb-4" />
           <div className="text-xl font-bold">{companyName || 'MyApp'}</div>
         </div>
         <div className="flex justify-between items-center mb-8">

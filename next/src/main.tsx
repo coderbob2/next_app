@@ -1,4 +1,3 @@
-import React, { type JSX } from 'react';
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { FrappeProvider } from 'frappe-react-sdk';
@@ -37,6 +36,7 @@ import StockTransferPage from "./pages/StockTransferPage";
 import StockAdjustmentPage from "./pages/StockAdjustmentPage";
 import Dashboard from './pages/Dashboard';
 import CustomExchangeRatePage from './pages/CustomExchangeRatePage';
+import type { JSX } from 'react';
 
 const queryClient = new QueryClient();
 
