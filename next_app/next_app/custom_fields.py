@@ -1,8 +1,8 @@
 import frappe
 
 def setup_custom_fields_on_load():
-    # if frappe.db.get_global("next_app_custom_fields_setup_complete"):
-    #     return
+    if frappe.db.get_global("next_app_custom_fields_setup_complete"):
+        return
     doctype_fields = {
         "Customer": [
             {"fieldname": "custom_phone", "label": "Phone", "fieldtype": "Data", "insert_after": "phone_no"},
