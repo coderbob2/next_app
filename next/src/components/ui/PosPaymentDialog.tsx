@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -36,9 +35,10 @@ interface PosPaymentDialogProps {
     total: number;
     onSubmit: (paymentDetails: any) => void;
     currency: string;
+    warehouse: string;
 }
 
-const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, cart, total, onSubmit, currency }) => {
+const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, cart, total, onSubmit, currency, warehouse }) => {
     const [paymentStatus, setPaymentStatus] = useState("");
     const [stockStatus, setStockStatus] = useState("");
     const [modeOfPayment, setModeOfPayment] = useState("");
@@ -105,6 +105,19 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
         setAccount("");
     }, [modeOfPayment]);
 
+    const { data: warehouseDoc } = useFrappeGetDocList("Warehouse", {
+        fields: ["name", "custom_cash_account"],
+        filters: [["name", "=", warehouse]],
+        limit: 1
+    });
+
+    useEffect(() => {
+        if ((paymentStatus === 'Paid' || paymentStatus === 'Partly Paid') && modeOfPaymentType?.[0]?.type === "Cash" && warehouseDoc?.[0]?.custom_cash_account) {
+            setAccount(warehouseDoc[0].custom_cash_account);
+        }
+    }, [paymentStatus, modeOfPaymentType, warehouseDoc]);
+
+
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
@@ -123,7 +136,12 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
 
     const isConfirmDisabled = () => {
         if (!paymentStatus || !stockStatus) return true;
-        if ((paymentStatus === "Paid" || paymentStatus === "Partly Paid") && (!modeOfPayment || !account)) return true;
+        if ((paymentStatus === "Paid" || paymentStatus === "Partly Paid") && !modeOfPayment) {
+            return true;
+        }
+        if ((paymentStatus === "Paid" || paymentStatus === "Partly Paid") && modeOfPaymentType?.[0]?.type !== "Cash" && !account) {
+            return true;
+        }
         return false;
     };
 
@@ -185,18 +203,20 @@ const PosPaymentDialog: React.FC<PosPaymentDialogProps> = ({ isOpen, onClose, ca
                                     className="w-full col-span-2"
                                 />
                             </div>
-                            <div className="grid grid-cols-3 items-center gap-4">
-                                <Label htmlFor="account" className="text-right">Account</Label>
-                                <Combobox
-                                    options={accountOptions}
-                                    value={account}
-                                    onChange={setAccount}
-                                    placeholder="Select account"
-                                    isLoading={accountsLoading}
-                                    className="w-full col-span-2"
-                                    disabled={!modeOfPayment}
-                                />
-                            </div>
+                            {modeOfPayment && modeOfPaymentType?.[0]?.type !== "Cash" && (
+                                <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="account" className="text-right">Account</Label>
+                                    <Combobox
+                                        options={accountOptions}
+                                        value={account}
+                                        onChange={setAccount}
+                                        placeholder="Select account"
+                                        isLoading={accountsLoading}
+                                        className="w-full col-span-2"
+                                        disabled={!modeOfPayment}
+                                    />
+                                </div>
+                            )}
                         </>
                     )}
 

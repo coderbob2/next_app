@@ -20,7 +20,9 @@ export default function PaymentEntryDialog({ isOpen, onClose, paymentType, party
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[800px]">
                 <DialogHeader>
-                    <DialogTitle>Create New {partyTypeSingular} Receipt</DialogTitle>
+                    <DialogTitle>
+                        {partyTypeSingular === 'Supplier' ? 'Create New Supplier Payment' : `Create New ${partyTypeSingular} Receipt`}
+                    </DialogTitle>
                 </DialogHeader>
                 <PaymentEntryForm paymentType={paymentType} onClose={onClose} mutate={mutate} />
             </DialogContent>

@@ -1,8 +1,9 @@
 import { useFrappeGetDocList, useFrappeCreateDoc } from 'frappe-react-sdk';
 
-export const useWarehouses = () => {
+export const useWarehouses = (company: string) => {
   const { data, isLoading, error } = useFrappeGetDocList('Warehouse', {
-    fields: ['name'],
+    fields: ['name', 'custom_shop_no', 'custom_phone_1', 'custom_phone_2', 'custom_cash_account'],
+    filters: company ? [['company', '=', company]] : [],
   });
   return { data, isLoading, error };
 };

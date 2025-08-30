@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { menuItems } from './menuItems';
-import { useFrappeGetCall } from 'frappe-react-sdk';
 import logo from '../../assets/next_logo.png';
+import { useCompany } from '../../contexts/CompanyProvider';
 
 interface SideNavProps {
   isOpen: boolean;
@@ -10,14 +10,7 @@ interface SideNavProps {
 }
 
 const SideNav: React.FC<SideNavProps> = ({ isOpen, toggleSideNav }) => {
-  const [companyName, setCompanyName] = useState<string>('');
-  const { data: companyData, error } = useFrappeGetCall('next_app.next_app.utils.get_company_name', {}, 'get_company_name');
-
-  useEffect(() => {
-    if (companyData) {
-      setCompanyName(companyData.message);
-    }
-  }, [companyData]);
+  const { company } = useCompany();
 
   return (
     <>
@@ -34,7 +27,7 @@ const SideNav: React.FC<SideNavProps> = ({ isOpen, toggleSideNav }) => {
       >
         <div className="flex flex-col items-center mb-8 pt-4">
           <img src={logo} alt="Logo" className="h-16 w-16 mb-4" />
-          <div className="text-xl font-bold">{companyName || 'MyApp'}</div>
+          <div className="text-xl font-bold">{company || 'MyApp'}</div>
         </div>
         <div className="flex justify-between items-center mb-8">
           <button onClick={toggleSideNav} className="text-white md:hidden">

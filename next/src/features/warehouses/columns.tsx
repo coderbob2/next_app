@@ -1,6 +1,6 @@
 import type { Warehouse } from "../../types/Stock/Warehouse";
 import type { KeyedMutator } from "swr";
-import { ActionsCell } from "./ActionsCell";
+import { ActionsCell } from "@/features/warehouses/ActionsCell";
 
 export const getColumns = (mutate: KeyedMutator<any>, mutateCount: KeyedMutator<any>) => [
   {
@@ -14,6 +14,26 @@ export const getColumns = (mutate: KeyedMutator<any>, mutateCount: KeyedMutator<
   {
     accessorKey: "company",
     header: "Company",
+  },
+  {
+    accessorKey: "warehouse_type",
+    header: "Warehouse Type",
+  },
+  {
+    accessorKey: "custom_shop_no",
+    header: "Shop No",
+  },
+  {
+    accessorKey: "custom_phone_1",
+    header: "Phone 1",
+  },
+  {
+    accessorKey: "custom_phone_2",
+    header: "Phone 2",
+  },
+  {
+    accessorKey: "custom_cash_account",
+    header: "Account",
   },
   {
     id: "actions",

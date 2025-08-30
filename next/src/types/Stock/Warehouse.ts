@@ -50,4 +50,8 @@ export interface Warehouse{
 	rgt?: number
 	/**	Old Parent : Link - Warehouse	*/
 	old_parent?: string
+	custom_shop_no?: string
+	custom_phone_1?: string
+	custom_phone_2?: string
+	custom_cash_account?: string
 }

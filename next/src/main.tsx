@@ -6,6 +6,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import App from './App.tsx';
 
+import { CompanyProvider } from './contexts/CompanyProvider.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import HomePage from './pages/HomePage.tsx';
@@ -214,8 +215,10 @@ createRoot(document.getElementById('root')!).render(
     siteName={getSiteName()}
   >
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <RouterProvider router={router} />
+      <CompanyProvider>
+        <Toaster />
+        <RouterProvider router={router} />
+      </CompanyProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </FrappeProvider>

@@ -3,12 +3,13 @@ import { useFrappeCreateDoc, useFrappeGetDocList } from "frappe-react-sdk";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { KeyedMutator } from "swr";
 import { toast } from "sonner";
 import { Combobox } from "@/components/ui/combobox";
 import { NumericFormat } from "react-number-format";
-import { DatePicker } from "@/components/ui/datepicker";
+import { useCompany } from "@/hooks/useCompany";
+import { useWarehouses } from "@/features/pos/posAPI";
 
 
 
@@ -30,10 +31,25 @@ export default function PaymentEntryForm({
     const [partyName, setPartyName] = useState("");
     const [postingDate, setPostingDate] = useState<Date | undefined>(new Date());
     const [modeOfPayment, setModeOfPayment] = useState("");
+    const [warehouse, setWarehouse] = useState('');
     const [paidAmount, setPaidAmount] = useState(0);
     const [remarks, setRemarks] = useState("");
     const [currency, setCurrency] = useState("");
     const [paidToAccount, setPaidToAccount] = useState("");
+    const [paidFromAccount, setPaidFromAccount] = useState("");
+    const [sourceExchangeRate, setSourceExchangeRate] = useState<number | undefined>();
+    const [isAccountDisabled, setIsAccountDisabled] = useState(true);
+
+    const companyContext = useCompany();
+    const company = companyContext?.company;
+    const companyCurrency = companyContext?.currency;
+
+    const { data: warehouses, isLoading: warehousesLoading } = useWarehouses(company as string);
+  
+    const warehouseOptions = useMemo(() => {
+        if (!warehouses) return [];
+        return warehouses.map((w) => ({ label: w.name, value: w.name }));
+    }, [warehouses]);
 
     const { data: customers, isLoading: customersLoading } = useFrappeGetDocList("Customer", {
         fields: ["name"],
@@ -45,23 +61,23 @@ export default function PaymentEntryForm({
     }, [customers]);
 
     const { data: suppliers, isLoading: suppliersLoading } = useFrappeGetDocList("Supplier", {
-        fields: ["name"],
+        fields: ["name", "default_currency"],
         limit: 1000
     });
     const supplierOptions = useMemo(() => {
         if (!suppliers) return [];
-        return suppliers.map((s) => ({ label: s.name, value: s.name }));
+        return suppliers.map((s) => ({ label: s.name, value: s.name, default_currency: s.default_currency }));
     }, [suppliers]);
 
     const partyOptions = partyType === 'Customer' ? customerOptions : supplierOptions;
 
     const { data: modeOfPayments, isLoading: modeOfPaymentsLoading } = useFrappeGetDocList("Mode of Payment", {
-        fields: ["name"],
+        fields: ["name", "type"],
         limit: 1000
     });
     const modeOfPaymentOptions = useMemo(() => {
         if (!modeOfPayments) return [];
-        return modeOfPayments.map((m) => ({ label: m.name, value: m.name }));
+        return modeOfPayments.map((m) => ({ label: m.name, value: m.name, type: m.type }));
     }, [modeOfPayments]);
 
     const { data: currencies, isLoading: currenciesLoading } = useFrappeGetDocList("Currency", {
@@ -76,7 +92,12 @@ export default function PaymentEntryForm({
 
     const { data: accounts, isLoading: accountsLoading } = useFrappeGetDocList("Account", {
         fields: ["name"],
-        filters: [["is_group", "=", 0]],
+        filters: [
+            ["is_group", "=", 0],
+            ["account_type", "=", modeOfPayment],
+            ["account_currency", "=", currency],
+           
+        ],
         limit: 1000
     });
 
@@ -84,6 +105,19 @@ export default function PaymentEntryForm({
         if (!accounts) return [];
         return accounts.map((a) => ({ label: a.name, value: a.name }));
     }, [accounts]);
+
+    useEffect(() => {
+        if (warehouse && currency && modeOfPayment) {
+            setIsAccountDisabled(false);
+        } else {
+            setIsAccountDisabled(true);
+            if (paymentType === 'Pay') {
+                setPaidFromAccount("");
+            } else {
+                setPaidToAccount("");
+            }
+        }
+    }, [warehouse, currency, modeOfPayment, paymentType])
 
     const { createDoc, loading } = useFrappeCreateDoc();
 
@@ -96,8 +130,8 @@ export default function PaymentEntryForm({
             toast.error("Party is required.");
             return false;
         }
-        if (!postingDate) {
-            toast.error("Posting Date is required.");
+        if (!warehouse) {
+            toast.error("Warehouse is required.");
             return false;
         }
         if (!modeOfPayment) {
@@ -112,7 +146,11 @@ export default function PaymentEntryForm({
             toast.error("Currency is required.");
             return false;
         }
-        if (!paidToAccount) {
+        if (paymentType === 'Pay' && !paidFromAccount) {
+            toast.error("Paid From Account is required.");
+            return false;
+        }
+        if (paymentType === 'Receive' && !paidToAccount) {
             toast.error("Paid To Account is required.");
             return false;
         }
@@ -132,12 +170,14 @@ export default function PaymentEntryForm({
                 mode_of_payment: modeOfPayment,
                 paid_amount: paidAmount,
                 received_amount: paidAmount,
-                paid_to_account_currency: currency,
+                // paid_to_account_currency: currency,
                 paid_from_account_currency: currency,
-                paid_to: paidToAccount,
+                paid_to: paymentType === 'Receive' ? paidToAccount : '',
+                paid_from: paymentType === 'Pay' ? paidFromAccount : '',
                 remarks: remarks,
                 docstatus: 1,
-                payment_type: paymentType
+                payment_type: paymentType,
+                source_exchange_rate: sourceExchangeRate
             };
 
             await createDoc("Payment Entry", doc);
@@ -155,6 +195,55 @@ export default function PaymentEntryForm({
         }
     };
 
+    const { data: warehouseDoc } = useFrappeGetDocList("Warehouse", {
+        fields: ["name", "cash_account"],
+        filters: [["name", "=", warehouse]],
+        limit: 1
+    });
+
+    const { data: modeOfPaymentType } = useFrappeGetDocList("Mode of Payment", {
+        fields: ["type"],
+        filters: [["name", "=", modeOfPayment]],
+        limit: 1
+    });
+
+    useEffect(() => {
+        if (modeOfPayment === 'Cash' && warehouseDoc?.[0]?.cash_account) {
+            if (paymentType === 'Pay') {
+                setPaidFromAccount(warehouseDoc[0].cash_account);
+            } else {
+                setPaidToAccount(warehouseDoc[0].cash_account);
+            }
+        }
+    }, [modeOfPaymentType, warehouseDoc, paymentType]);
+
+    useEffect(() => {
+        if (postingDate && currency && currency !== companyCurrency) {
+            fetch('/api/method/next_app.next_app.doctype.custom_exchange_rate.custom_exchange_rate.get_exchange_rate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    date: new Date(postingDate.getTime() - (postingDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0]
+                })
+            }).then(res => res.json()).then(data => {
+                if (data.message) {
+                    const { from_currency, to_currency, ex_rate } = data.message;
+                    if (from_currency === currency && to_currency === companyCurrency) {
+                        setSourceExchangeRate(ex_rate);
+                    } else if (from_currency === companyCurrency && to_currency === currency) {
+                        setSourceExchangeRate(1 / ex_rate);
+                    } else {
+                        toast.error("Exchange rate for the selected currency is not configured correctly.");
+                    }
+                } else {
+                    toast.error("Exchange rate not found or is 0 for the selected date.");
+                }
+            })
+        }
+    }, [postingDate, currency, companyCurrency])
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -163,17 +252,28 @@ export default function PaymentEntryForm({
                     <Combobox
                         options={partyOptions}
                         value={partyName}
-                        onChange={setPartyName}
+                        onChange={(value) => {
+                            setPartyName(value);
+                            if (paymentType === 'Pay') {
+                                const supplier = supplierOptions.find(s => s.value === value);
+                                if (supplier) {
+                                    setCurrency(supplier.default_currency);
+                                }
+                            }
+                        }}
                         placeholder={`Select a ${partyType.toLowerCase()}`}
                         isLoading={partyType === 'Customer' ? customersLoading : suppliersLoading}
                         className="w-full"
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="postingDate" className="text-sm font-semibold text-gray-700">Posting Date *</Label>
-                    <DatePicker
-                        date={postingDate}
-                        setDate={setPostingDate}
+                    <Label htmlFor="warehouse" className="text-sm font-semibold text-gray-700">Warehouse *</Label>
+                    <Combobox
+                        options={warehouseOptions}
+                        value={warehouse}
+                        onChange={setWarehouse}
+                        placeholder="Select a warehouse"
+                        isLoading={warehousesLoading}
                         className="w-full"
                     />
                 </div>
@@ -181,8 +281,13 @@ export default function PaymentEntryForm({
                     <Label htmlFor="modeOfPayment" className="text-sm font-semibold text-gray-700">Mode of Payment *</Label>
                     <Combobox
                         options={modeOfPaymentOptions}
-                        value={modeOfPayment}
-                        onChange={setModeOfPayment}
+                        value={modeOfPaymentOptions.find(m => m.type === modeOfPayment)?.value}
+                        onChange={(value) => {
+                            const selectedOption = modeOfPaymentOptions.find(m => m.value === value);
+                            if (selectedOption) {
+                                setModeOfPayment(selectedOption.type);
+                            }
+                        }}
                         placeholder="Select mode of payment"
                         isLoading={modeOfPaymentsLoading}
                         className="w-full"
@@ -199,18 +304,35 @@ export default function PaymentEntryForm({
                         className="w-full"
                     />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="paidToAccount" className="text-sm font-semibold text-gray-700">Paid To Account *</Label>
-                    <Combobox
-                        options={accountOptions}
-                        value={paidToAccount}
-                        onChange={setPaidToAccount}
-                        placeholder="Select an account"
-                        isLoading={accountsLoading}
-                        className="w-full"
-                    />
-                </div>
-                <div className="space-y-2">
+                {currency !== companyCurrency && sourceExchangeRate &&
+                    <div className="space-y-2">
+                        <Label htmlFor="exchangeRate" className="text-sm font-semibold text-gray-700">Exchange Rate</Label>
+                        <NumericFormat
+                            value={sourceExchangeRate}
+                            onValueChange={(values) => setSourceExchangeRate(values.floatValue)}
+                            customInput={Input}
+                            thousandSeparator
+                            decimalScale={6}
+                            allowNegative={false}
+                            className="w-full"
+                        />
+                    </div>
+                }
+                {modeOfPayment && modeOfPayment !== 'Cash' &&
+                    <div className="space-y-2">
+                        <Label htmlFor="paidFromAccount" className="text-sm font-semibold text-gray-700">{paymentType === 'Pay' ? 'Paid From Account *' : 'Paid To Account *'}</Label>
+                        <Combobox
+                            options={accountOptions}
+                            value={paymentType === 'Pay' ? paidFromAccount : paidToAccount}
+                            onChange={paymentType === 'Pay' ? setPaidFromAccount : setPaidToAccount}
+                            placeholder={`Select ${paymentType === 'Pay' ? 'an account to pay from' : 'an account to pay to'}`}
+                            isLoading={accountsLoading}
+                            className="w-full"
+                            disabled={isAccountDisabled}
+                        />
+                    </div>
+                }
+               <div className="space-y-2">
                     <Label htmlFor="paidAmount" className="text-sm font-semibold text-gray-700">Paid Amount *</Label>
                     <NumericFormat
                         value={paidAmount}

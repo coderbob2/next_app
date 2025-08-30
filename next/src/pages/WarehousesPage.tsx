@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { useDebounce } from "@/lib/useDebounce";
 import { getColumns } from "@/features/warehouses/columns";
 import WarehouseForm from "@/features/warehouses/WarehouseForm";
+import { useCompany } from "@/hooks/useCompany";
 import type { Warehouse } from "@/types/Stock/Warehouse";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +26,6 @@ import {
 } from "@/components/ui/select";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -40,7 +38,7 @@ interface Sort {
 
 const Exporter = ({ filters, onExported }: { filters: Filter[], onExported: () => void }) => {
   const { data: allWarehouses, isLoading } = useFrappeGetDocList<Warehouse>("Warehouse", {
-    fields: ["name", "warehouse_name", "is_group", "company"],
+    fields: ["name", "warehouse_name", "is_group", "company", "custom_shop_no", "custom_phone_1", "custom_phone_2", "custom_cash_account"],
     filters,
     limit: 0,
   });
@@ -71,6 +69,7 @@ export default function WarehousesPage() {
   const [sort, setSort] = useState<Sort>({ field: 'name', order: 'asc' });
   const [warehouseName, setWarehouseName] = useState("");
   const [exporting, setExporting] = useState(false);
+  const company = useCompany();
 
   const debouncedWarehouseName = useDebounce(warehouseName, 500);
 
@@ -78,11 +77,14 @@ export default function WarehousesPage() {
   if (debouncedWarehouseName) {
     filters.push(["warehouse_name", "like", `%${debouncedWarehouseName}%`]);
   }
+  if (company && company.company) {
+    filters.push(["company", "=", company.company]);
+  }
 
   const { data: warehouseCount, mutate: mutateCount } = useFrappeGetDocCount("Warehouse", filters);
 
   const { data: warehouses, isLoading, error, mutate } = useFrappeGetDocList<Warehouse>("Warehouse", {
-    fields: ["name", "warehouse_name", "is_group", "company"],
+    fields: ["name", "warehouse_name", "is_group", "company", "custom_shop_no", "custom_phone_1", "custom_phone_2", "custom_cash_account"],
     limit_start: (page - 1) * pageSize,
     limit: pageSize,
     orderBy: sort,
@@ -120,15 +122,10 @@ export default function WarehousesPage() {
                 Add Warehouse
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Warehouse</DialogTitle>
-              </DialogHeader>
-              <WarehouseForm
-                onClose={() => setShowForm(false)}
-                mutate={mutate}
-              />
-            </DialogContent>
+            <WarehouseForm
+              onClose={() => setShowForm(false)}
+              mutate={mutate}
+            />
           </Dialog>
         </div>
       </div>

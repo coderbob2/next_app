@@ -83,7 +83,7 @@ app_license = "mit"
 # ------------
 
 # before_install = "next_app.install.before_install"
-# after_install = "next_app.install.after_install"
+# after_install = "next_app.next_app.custom_fields.setup_custom_fields_on_load"
 
 # Uninstallation
 # ------------
@@ -137,13 +137,14 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "Payment Entry": {
+        "before_validate": "next_app.next_app.utils.set_source_exchange_rate"
+    },
+    "Warehouse": {
+        "before_insert": "next_app.next_app.utils.on_warehouse_before_insert"
+    }
+}
 
 # Scheduled Tasks
 # ---------------
